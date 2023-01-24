@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{1FA849DC-C0A4-495F-A8AB-40457A53D6F9}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>PerfomanceAppraissalSystem</RootNamespace>
+    <AssemblyName>PerfomanceAppraissalSystem</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MySql.Data, Version=6.9.10.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\..\Program Files (x86)\MySQL\MySQL Connector Net 6.9.10\Assemblies\v4.5\MySql.Data.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BossBoardRating.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="BossBoardRating.Designer.cs">
+      <DependentUpon>BossBoardRating.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Compare.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Compare.Designer.cs">
+      <DependentUpon>Compare.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EmployeeEvaluations.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="EmployeeEvaluations.Designer.cs">
+      <DependentUpon>EmployeeEvaluations.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EmployeeHome.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="EmployeeHome.Designer.cs">
+      <DependentUpon>EmployeeHome.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EmployeeReport.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="EmployeeReport.Designer.cs">
+      <DependentUpon>EmployeeReport.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EmployeeTask.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="EmployeeTask.Designer.cs">
+      <DependentUpon>EmployeeTask.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Evaluations.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Evaluations.Designer.cs">
+      <DependentUpon>Evaluations.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EvaluationsDisplay.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="EvaluationsDisplay.Designer.cs">
+      <DependentUpon>EvaluationsDisplay.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Home.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Home.Designer.cs">
+      <DependentUpon>Home.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Login.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Login.Designer.cs">
+      <DependentUpon>Login.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Ratings.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Ratings.Designer.cs">
+      <DependentUpon>Ratings.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Register.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Register.Designer.cs">
+      <DependentUpon>Register.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Report.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Report.Designer.cs">
+      <DependentUpon>Report.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Tasks.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Tasks.Designer.cs">
+      <DependentUpon>Tasks.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="BossBoardRating.resx">
+      <DependentUpon>BossBoardRating.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Compare.resx">
+      <DependentUpon>Compare.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EmployeeEvaluations.resx">
+      <DependentUpon>EmployeeEvaluations.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EmployeeHome.resx">
+      <DependentUpon>EmployeeHome.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EmployeeReport.resx">
+      <DependentUpon>EmployeeReport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EmployeeTask.resx">
+      <DependentUpon>EmployeeTask.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Evaluations.resx">
+      <DependentUpon>Evaluations.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EvaluationsDisplay.resx">
+      <DependentUpon>EvaluationsDisplay.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Home.resx">
+      <DependentUpon>Home.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Login.resx">
+      <DependentUpon>Login.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="Ratings.resx">
+      <DependentUpon>Ratings.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Register.resx">
+      <DependentUpon>Register.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Report.resx">
+      <DependentUpon>Report.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tasks.resx">
+      <DependentUpon>Tasks.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
