@@ -7,199 +7,110 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
+using Npgsql;
 
 namespace PerfomanceAppraissalSystem
 {
     public partial class Login : Form
     {
-        private MySqlConnection connection;
-        private string server;
-        private string database;
-        private string uid;
-        private string password;
-
         public Login()
         {
-            server = "localhost";
-            database = "PerformanceAppraissalSystem";
-            uid = "root";
-            password = "";
-            string connectionString;
-            connectionString = "SERVER=" + server + ";" + "DATABASE=" +
-            database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";";
-            connection = new MySqlConnection(connectionString);
-
-
             InitializeComponent();
         }
 
-        private bool OpenConnection()
-        {
-            try
-            {
-                connection.Open();
-                return true;
-            }
-            catch (MySqlException ex)
-            {
-                //When handling errors, you can your application's response based on the  
-                //error number.              
-                //The two most common error numbers when connecting are as follows:   
-                //0: Cannot connect to server.       
-                //1045: Invalid user name and/or password.     
-                switch (ex.Number)
-                {
-                    case 0:
-                        MessageBox.Show("Cannot connect to server.  Contact administrator");
-                        break;
-                    case 1045:
-                        MessageBox.Show("Invalid username/password, please try again");
-                        break;
-                }
-                return false;
-            }
-        }
-
-        private bool CloseConnection()
-        {
-            try
-            {
-                connection.Close();
-                return true;
-            }
-            catch (MySqlException ex)
-            {
-                MessageBox.Show(ex.Message);
-                return false;
-            }
-        }
-
-
         private void cmdLogin_Click(object sender, EventArgs e)
         {
-            if (cmbUserType.Text == "Boss")
+            // Get the DatabaseManager instance
+            DatabaseManager dbManager = DatabaseManager.Instance;
+            
+            // Validate input fields
+            if (string.IsNullOrEmpty(txtEmpIDLog.Text) || string.IsNullOrEmpty(txtLogPwd.Text))
             {
-                try
-                {
-                    //if (this.OpenConnection() == true)
-                    {
-                        MySqlCommand cmd = new MySqlCommand("Select * from employees where EmployeeID = '" + this.txtEmpIDLog.Text + "' and Password = '" + this.txtLogPwd.Text + "'", connection);
-                        MySqlDataReader myreader;
-                        connection.Open();
-                        myreader = cmd.ExecuteReader();
-                        int count = 0;
-                        while (myreader.Read())
-                        {
-                            count = count + 1;
-                        }
-                        if (count == 1)
-                        {
-                            MessageBox.Show("login successful");
-                            this.Hide();
-                            Home h = new Home();
-                            h.Show();
-                        }
-
-                        else if (count > 1)
-                        {
-                            MessageBox.Show("login not successful duplicated details");
-                        }
-
-                        else
-                            MessageBox.Show("login not successful");
-                        connection.Close();
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
+                MessageBox.Show("Please enter both Employee ID and Password");
+                return;
             }
 
-            if (cmbUserType.Text == "Employee")
+            // Determine user type based on radio button selection
+            string userType = "Employee"; // Default
+            if (rdBoss.Checked)
             {
-                try
-                {
-                   // if (this.OpenConnection() == true)
-                    {
-                        MySqlCommand cmd = new MySqlCommand("Select * from employees where EmployeeID = '" + this.txtEmpIDLog.Text + "' and Password = '" + this.txtLogPwd.Text + "'", connection);
-                        MySqlDataReader myreader;
-                        connection.Open();
-                        myreader = cmd.ExecuteReader();
-                        int count = 0;
-                        while (myreader.Read())
-                        {
-                            count = count + 1;
-                        }
-                        if (count == 1)
-                        {
-                            MessageBox.Show("login chanchn");
-                            this.Hide();
-                            EmployeeHome Eh = new EmployeeHome();
-                            Eh.Show();
-                        }
-
-                        else if (count > 1)
-                        {
-                            MessageBox.Show("login not successful duplicate chnchn");
-                        }
-
-                        else
-                            MessageBox.Show("login not successful");
-                        connection.Close();
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
+                userType = "Boss";
+            }
+            else if (rdBoard.Checked)
+            {
+                userType = "Board";
             }
 
-
-            if (cmbUserType.Text == "Board")
+            try
             {
-                try
+                // Use DatabaseManager to authenticate user
+                bool isAuthenticated = dbManager.AuthenticateUser(txtEmpIDLog.Text, txtLogPwd.Text, userType);
+                
+                if (isAuthenticated)
                 {
+                    // Authentication successful, proceed based on user type
+                    if (rdBoss.Checked)
                     {
-                        MySqlCommand cmd = new MySqlCommand("Select * from employees where EmployeeID = '" + this.txtEmpIDLog.Text + "' and Password = '" + this.txtLogPwd.Text + "'", connection);
-                        MySqlDataReader myreader;
-                        connection.Open();
-                        myreader = cmd.ExecuteReader();
-                        int count = 0;
-                        while (myreader.Read())
+                        // Check if user exists in bosses table
+                        Dictionary<string, object> parameters = new Dictionary<string, object>
                         {
-                            count = count + 1;
-                        }
-                        if (count == 1)
+                            { "@employeeId", txtEmpIDLog.Text }
+                        };
+                        
+                        DataTable bossTable = dbManager.ExecuteQuery(
+                            "SELECT * FROM bosses WHERE EmployeeID = @employeeId", 
+                            parameters);
+                        
+                        if (bossTable.Rows.Count > 0)
                         {
-                            MessageBox.Show("login chanchn");
+                            // User is a boss, open boss form
                             this.Hide();
-                            Home h = new Home();
-                            h.Show();
+                            Home home = new Home();
+                            home.Show();
                         }
-
-                        else if (count > 1)
-                        {
-                            MessageBox.Show("login not successful duplicate chnchn");
-                        }
-
                         else
-                            MessageBox.Show("login not successful");
-                        connection.Close();
-
+                        {
+                            MessageBox.Show("You are not registered as a boss");
+                        }
+                    }
+                    else if (rdEmployee.Checked)
+                    {
+                        // User is an employee, open employee form
+                        this.Hide();
+                        EmployeeHome employeeHome = new EmployeeHome();
+                        employeeHome.Show();
+                    }
+                    else if (rdBoard.Checked)
+                    {
+                        // Check if user exists in boardmembers table
+                        Dictionary<string, object> parameters = new Dictionary<string, object>
+                        {
+                            { "@employeeId", txtEmpIDLog.Text }
+                        };
+                        
+                        DataTable boardTable = dbManager.ExecuteQuery(
+                            "SELECT * FROM boardmembers WHERE EmployeeID = @employeeId", 
+                            parameters);
+                        
+                        if (boardTable.Rows.Count > 0)
+                        {
+                            // User is a board member, open board form
+                            this.Hide();
+                            BoardHome boardHome = new BoardHome();
+                            boardHome.Show();
+                        }
+                        else
+                        {
+                            MessageBox.Show("You are not registered as a board member");
+                        }
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
             }
-              
-
-       }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Login error: " + ex.Message);
+            }
+        }
 
         private void cmdExit_Click(object sender, EventArgs e)
         {
@@ -213,6 +124,5 @@ namespace PerfomanceAppraissalSystem
             Register r = new Register();
             r.Show();
         }
-        }
-
     }
+}
