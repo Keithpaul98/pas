@@ -7,74 +7,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
 
 namespace PerfomanceAppraissalSystem
 {
     public partial class EmployeeEvaluations : Form
     {
-        private MySqlConnection connection;
-        private string server;
-        private string database;
-        private string uid;
-        private string password;
+        // Reference to the DatabaseManager singleton
+        private readonly DatabaseManager dbManager;
 
         public EmployeeEvaluations()
         {
-            server = "localhost";
-            database = "PerformanceAppraissalSystem";
-            uid = "root";
-            password = "";
-            string connectionString;
-            connectionString = "SERVER=" + server + ";" + "DATABASE=" +
-            database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";";
-            connection = new MySqlConnection(connectionString); 
+            // Get the DatabaseManager instance
+            dbManager = DatabaseManager.Instance;
 
             InitializeComponent();
         }
-
-        private bool OpenConnection()
-        {
-            try
-            {
-                connection.Open();
-                return true;
-            }
-            catch (MySqlException ex)
-            {
-                //When handling errors, you can your application's response based on the  
-                //error number.              
-                //The two most common error numbers when connecting are as follows:   
-                //0: Cannot connect to server.       
-                //1045: Invalid user name and/or password.     
-                switch (ex.Number)
-                {
-                    case 0:
-                        MessageBox.Show("Cannot connect to server.  Contact administrator");
-                        break;
-                    case 1045:
-                        MessageBox.Show("Invalid username/password, please try again");
-                        break;
-                }
-                return false;
-            }
-        }
-
-
-        private bool CloseConnection()
-        {
-            try
-            {
-                connection.Close();
-                return true;
-            }
-            catch (MySqlException ex)
-            {
-                MessageBox.Show(ex.Message);
-                return false;
-            }
-        } 
-
 
         private void cmdHome_Click(object sender, EventArgs e)
         {
@@ -113,7 +60,6 @@ namespace PerfomanceAppraissalSystem
 
         private void cmdLogout_Click(object sender, EventArgs e)
         {
-
             this.Hide();
             Login l = new Login();
             l.Show();
@@ -121,86 +67,97 @@ namespace PerfomanceAppraissalSystem
 
         private void cmdCheckEvaluation_Click(object sender, EventArgs e)
         {
-            //tracking all evaluations
-            if (ckbxAllevaluations.Checked == true)
+            // Input validation
+            if (string.IsNullOrEmpty(txtEmployeeIDEvaluation.Text))
             {
-                if (this.OpenConnection() == true)
-                {
-                    try
-                    {
-                        String query = "select r.Rating, r.Period, r.Year, e.JobTitle, e.Firstname, e.Lastname, r.CommentContent, r.Commenter From employees e, ratings r where e.EmployeeID = r.EmployeeID and e.EmployeeID  = '" + txtEmployeeIDEvaluation.Text + "'";
-                        MySqlCommand cmd = new MySqlCommand(query, connection);
-                        cmd.ExecuteNonQuery();
-                        MySqlDataAdapter da = new MySqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
-
-                        foreach (DataRow dr in dt.Rows)
-                        {
-                            ListViewItem item = new ListViewItem(dr["Rating"].ToString());
-                            item.SubItems.Add(dr["Period"].ToString());
-                            item.SubItems.Add(dr["Year"].ToString());
-                            item.SubItems.Add(dr["JobTitle"].ToString());
-                            item.SubItems.Add(dr["Firstname"].ToString());
-                            item.SubItems.Add(dr["Lastname"].ToString());
-                            item.SubItems.Add(dr["CommentContent"].ToString());
-                            item.SubItems.Add(dr["Commenter"].ToString());
-
-                            listView1.Items.Add(item);
-                        }
-                        this.CloseConnection();
-                        MessageBox.Show("here is your evaluation");
-
-
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Evaluations cannot be displayed" + ex.Message);
-                    }
-                }
-
+                MessageBox.Show("Please enter an Employee ID.", "Validation Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
-            else if (this.OpenConnection() == true)
+
+            try
             {
-                //Tracking specified evaluations
-                try
-                {
-                    String query = "select r.Rating, r.Period, r.Year, e.JobTitle, e.Firstname, e.Lastname, r.CommentContent, r.Commenter From employees e, ratings r where e.EmployeeID = r.EmployeeID and r.Year ='" + cmbSelectEvaluation.Text + "' and r.Period = '" + cmbEvaluationType.Text + "' and e.EmployeeID  = '" + txtEmployeeIDEvaluation.Text + "'";
-                    MySqlCommand cmd = new MySqlCommand(query, connection);
-                    cmd.ExecuteNonQuery();
-                    MySqlDataAdapter da = new MySqlDataAdapter(cmd);
-                    DataTable dt = new DataTable();
-                    da.Fill(dt);
+                DataTable dt;
+                Dictionary<string, object> parameters = new Dictionary<string, object>();
+                
+                // Clear previous results
+                listView1.Items.Clear();
 
-                    foreach (DataRow dr in dt.Rows)
+                if (ckbxAllevaluations.Checked)
+                {
+                    // Query for all evaluations
+                    parameters.Add("@employeeId", txtEmployeeIDEvaluation.Text);
+                    
+                    dt = dbManager.ExecuteQuery(
+                        "SELECT r.Rating, r.Period, r.Year, e.JobTitle, e.Firstname, e.Lastname, " +
+                        "r.CommentContent, r.Commenter " +
+                        "FROM employees e, ratings r " +
+                        "WHERE e.EmployeeID = r.EmployeeID AND e.EmployeeID = @employeeId",
+                        parameters
+                    );
+                }
+                else
+                {
+                    // Input validation for specific evaluation
+                    if (string.IsNullOrEmpty(cmbSelectEvaluation.Text) || 
+                        string.IsNullOrEmpty(cmbEvaluationType.Text))
                     {
-                        ListViewItem item = new ListViewItem(dr["Rating"].ToString());
-                        item.SubItems.Add(dr["Period"].ToString());
-                        item.SubItems.Add(dr["Year"].ToString());
-                        item.SubItems.Add(dr["JobTitle"].ToString());
-                        item.SubItems.Add(dr["Firstname"].ToString());
-                        item.SubItems.Add(dr["Lastname"].ToString());
-                        item.SubItems.Add(dr["CommentContent"].ToString());
-                        item.SubItems.Add(dr["Commenter"].ToString());
-
-                        listView1.Items.Add(item);
+                        MessageBox.Show("Please select both Year and Period for the evaluation.", 
+                            "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
                     }
-                    this.CloseConnection();
-                    MessageBox.Show("here is your evaluation");
-
-
+                    
+                    // Query for specific evaluation period
+                    parameters.Add("@employeeId", txtEmployeeIDEvaluation.Text);
+                    parameters.Add("@year", cmbSelectEvaluation.Text);
+                    parameters.Add("@period", cmbEvaluationType.Text);
+                    
+                    dt = dbManager.ExecuteQuery(
+                        "SELECT r.Rating, r.Period, r.Year, e.JobTitle, e.Firstname, e.Lastname, " +
+                        "r.CommentContent, r.Commenter " +
+                        "FROM employees e, ratings r " +
+                        "WHERE e.EmployeeID = r.EmployeeID AND r.Year = @year " +
+                        "AND r.Period = @period AND e.EmployeeID = @employeeId",
+                        parameters
+                    );
                 }
-                catch (Exception ex)
+
+                // Check if any results were found
+                if (dt.Rows.Count == 0)
                 {
-                    MessageBox.Show("Evaluations cannot be displayed" + ex.Message);
+                    MessageBox.Show("No evaluations found for the specified criteria.", 
+                        "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
-            }                         
+
+                // Populate the ListView with results
+                foreach (DataRow dr in dt.Rows)
+                {
+                    ListViewItem item = new ListViewItem(dr["Rating"].ToString());
+                    item.SubItems.Add(dr["Period"].ToString());
+                    item.SubItems.Add(dr["Year"].ToString());
+                    item.SubItems.Add(dr["JobTitle"].ToString());
+                    item.SubItems.Add(dr["Firstname"].ToString());
+                    item.SubItems.Add(dr["Lastname"].ToString());
+                    item.SubItems.Add(dr["CommentContent"].ToString());
+                    item.SubItems.Add(dr["Commenter"].ToString());
+
+                    listView1.Items.Add(item);
+                }
+
+                MessageBox.Show("Evaluations retrieved successfully.", "Success", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error retrieving evaluations: " + ex.Message, 
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void cmdHelp_Click(object sender, EventArgs e)
         {
-            //user manual function
-
+            // User manual function
             Help.ShowHelp(this, "UserManual.chm");
         }
     }

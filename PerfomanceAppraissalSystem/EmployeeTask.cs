@@ -7,76 +7,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
 
 namespace PerfomanceAppraissalSystem
 {
     public partial class EmployeeTask : Form
     {
-        private MySqlConnection connection;
-        private string server;
-        private string database;
-        private string uid;
-        private string password;
+        // Reference to the DatabaseManager singleton
+        private readonly DatabaseManager dbManager;
 
         public EmployeeTask()
         {
-            server = "localhost";
-            database = "PerformanceAppraissalSystem";
-            uid = "root";
-            password = "";
-            string connectionString;
-            connectionString = "SERVER=" + server + ";" + "DATABASE=" +
-            database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";";
-            connection = new MySqlConnection(connectionString); 
-
+            // Get the DatabaseManager instance
+            dbManager = DatabaseManager.Instance;
 
             InitializeComponent();
         }
-
-
-        private bool OpenConnection()
-        {
-            try
-            {
-                connection.Open();
-                return true;
-            }
-            catch (MySqlException ex)
-            {
-                //When handling errors, you can your application's response based on the  
-                //error number.              
-                //The two most common error numbers when connecting are as follows:   
-                //0: Cannot connect to server.       
-                //1045: Invalid user name and/or password.     
-                switch (ex.Number)
-                {
-                    case 0:
-                        MessageBox.Show("Cannot connect to server.  Contact administrator");
-                        break;
-                    case 1045:
-                        MessageBox.Show("Invalid username/password, please try again");
-                        break;
-                }
-                return false;
-            }
-        }
-
-
-        private bool CloseConnection()
-        {
-            try
-            {
-                connection.Close();
-                return true;
-            }
-            catch (MySqlException ex)
-            {
-                MessageBox.Show(ex.Message);
-                return false;
-            }
-        } 
-
 
         private void cmdHome_Click(object sender, EventArgs e)
         {
@@ -115,7 +60,6 @@ namespace PerfomanceAppraissalSystem
 
         private void button5_Click(object sender, EventArgs e)
         {
-
             this.Hide();
             Login l = new Login();
             l.Show();
@@ -123,138 +67,188 @@ namespace PerfomanceAppraissalSystem
 
         private void cmdChangeTask_Click(object sender, EventArgs e)
         {
-
-            if (this.OpenConnection() == true)
+            // Input validation
+            if (string.IsNullOrEmpty(txtTaskID.Text) || string.IsNullOrEmpty(cmbStatus.Text))
             {
+                MessageBox.Show("Please enter Task ID and select a Status.", "Validation Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-                try
+            try
+            {
+                Dictionary<string, object> parameters = new Dictionary<string, object>
                 {
-                    String query = "UPDATE tasks SET taskstatus ='" + cmbStatus.Text + "' WHERE taskID= '" + txtTaskID.Text + "' ";
-                    MySqlCommand cmd = new MySqlCommand(query, connection);
-                    cmd.ExecuteNonQuery();
-                    this.CloseConnection();
-                    MessageBox.Show("Task updated");
-                }
-                catch (Exception ex)
+                    { "@taskId", txtTaskID.Text },
+                    { "@status", cmbStatus.Text }
+                };
+
+                int rowsAffected = dbManager.ExecuteNonQuery(
+                    "UPDATE tasks SET taskstatus = @status WHERE taskID = @taskId",
+                    parameters
+                );
+
+                if (rowsAffected > 0)
                 {
-                    MessageBox.Show("Task cannot be updated" + ex.Message);
+                    MessageBox.Show("Task updated successfully.", "Success", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    clear();
                 }
-
-                clear();
-
+                else
+                {
+                    MessageBox.Show("No task found with the specified ID.", "Information", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error updating task: " + ex.Message, 
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void clear()
-        { }
+        {
+            txtTaskID.Clear();
+            txtTaskname.Clear();
+            cmbStatus.SelectedIndex = -1;
+            listView1.Items.Clear();
+        }
 
         private void cmdAddTask_Click(object sender, EventArgs e)
         {
-            if (cmbStatus.Text == "Completed task")
+            // Input validation
+            if (string.IsNullOrEmpty(txtTaskID.Text) || 
+                string.IsNullOrEmpty(txtTaskname.Text) || 
+                string.IsNullOrEmpty(cmbStatus.Text))
             {
-                if (this.OpenConnection() == true)
-                {
-                    try
-                    {
-                        String query = "INSERT INTO tasks (taskID, taskname, taskstatus) VALUES('" + txtTaskID.Text + "','" + txtTaskname.Text + "','" + cmbStatus.Text + "')";
-                        MySqlCommand cmd = new MySqlCommand(query, connection);
-                        cmd.ExecuteNonQuery();
-                        this.CloseConnection();
-                        MessageBox.Show("Task added");
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Task not added" + ex.Message);
-                    }
-
-                    clear();
-
-                }
+                MessageBox.Show("Please enter Task ID, Task Name, and select a Status.", 
+                    "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
 
-            else if (cmbStatus.Text == "Incomplete task")
+            try
             {
-                if (this.OpenConnection() == true)
+                Dictionary<string, object> parameters = new Dictionary<string, object>
                 {
-                    try
-                    {
-                        String query = "INSERT INTO tasks (taskID, Taskname, taskstatus) VALUES('" + txtTaskID.Text + "','" + txtTaskname.Text + "','" + cmbStatus.Text + "')";
-                        MySqlCommand cmd = new MySqlCommand(query, connection);
-                        cmd.ExecuteNonQuery();
-                        this.CloseConnection();
-                        MessageBox.Show("Task added");
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Task not added" + ex.Message);
-                    }
+                    { "@taskId", txtTaskID.Text },
+                    { "@taskName", txtTaskname.Text },
+                    { "@status", cmbStatus.Text }
+                };
 
+                int rowsAffected = dbManager.ExecuteNonQuery(
+                    "INSERT INTO tasks (taskID, taskname, taskstatus) VALUES (@taskId, @taskName, @status)",
+                    parameters
+                );
+
+                if (rowsAffected > 0)
+                {
+                    MessageBox.Show("Task added successfully.", "Success", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
                     clear();
-
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error adding task: " + ex.Message, 
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void cmdRemoveTask_Click(object sender, EventArgs e)
         {
-            if (this.OpenConnection() == true)
+            // Input validation
+            if (string.IsNullOrEmpty(txtTaskID.Text))
             {
-                try
+                MessageBox.Show("Please enter Task ID to delete.", "Validation Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                Dictionary<string, object> parameters = new Dictionary<string, object>
                 {
-                    String query = "DELETE FROM tasks WHERE TaskID = '" + txtTaskID.Text + "'";
-                    MySqlCommand cmd = new MySqlCommand(query, connection);
-                    cmd.ExecuteNonQuery();
-                    this.CloseConnection();
-                    MessageBox.Show("Task deleted");
+                    { "@taskId", txtTaskID.Text }
+                };
 
-                }
-                catch (Exception ex)
+                int rowsAffected = dbManager.ExecuteNonQuery(
+                    "DELETE FROM tasks WHERE TaskID = @taskId",
+                    parameters
+                );
+
+                if (rowsAffected > 0)
                 {
-                    MessageBox.Show("Task cannot be deleted" + ex.Message);
+                    MessageBox.Show("Task deleted successfully.", "Success", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    clear();
                 }
-
-                clear();
-
+                else
+                {
+                    MessageBox.Show("No task found with the specified ID.", "Information", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error deleting task: " + ex.Message, 
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void cmdViewTasks_Click(object sender, EventArgs e)
         {
-            if (this.OpenConnection() == true)
+            // Input validation
+            if (string.IsNullOrEmpty(txtTaskID.Text))
             {
+                MessageBox.Show("Please enter Task ID to view.", "Validation Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-                try
+            try
+            {
+                // Clear previous results
+                listView1.Items.Clear();
+
+                Dictionary<string, object> parameters = new Dictionary<string, object>
                 {
-                    String query = "Select * FROM tasks where taskID = '"+txtTaskID.Text+"' ";
-                    MySqlCommand cmd = new MySqlCommand(query, connection);
-                    cmd.ExecuteNonQuery();
-                    //used to list items in the database on in the listview
-                    MySqlDataReader reader = cmd.ExecuteReader();
-                    while (reader.Read())
+                    { "@taskId", txtTaskID.Text }
+                };
+
+                DataTable dt = dbManager.ExecuteQuery(
+                    "SELECT * FROM tasks WHERE taskID = @taskId",
+                    parameters
+                );
+
+                if (dt.Rows.Count > 0)
+                {
+                    foreach (DataRow row in dt.Rows)
                     {
-                        ListViewItem item = new ListViewItem(reader["taskID"].ToString());
-                        item.SubItems.Add(reader["taskname"].ToString());
-                        item.SubItems.Add(reader["taskstatus"].ToString());
+                        ListViewItem item = new ListViewItem(row["taskID"].ToString());
+                        item.SubItems.Add(row["taskname"].ToString());
+                        item.SubItems.Add(row["taskstatus"].ToString());
 
                         listView1.Items.Add(item);
                     }
-                    this.CloseConnection();
-
-                    MessageBox.Show("Task can be viewed");
+                    MessageBox.Show("Tasks retrieved successfully.", "Success", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show("Task cannot be viewed" + ex.Message);
+                    MessageBox.Show("No task found with the specified ID.", "Information", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-
-                clear();
-
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error viewing task: " + ex.Message, 
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void cmdHelp_Click(object sender, EventArgs e)
         {
-
             Help.ShowHelp(this, "UserManual.chm");
         }
     }

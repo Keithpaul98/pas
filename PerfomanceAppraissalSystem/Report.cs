@@ -7,72 +7,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using MySql.Data.MySqlClient;
 
 namespace PerfomanceAppraissalSystem
 {
     public partial class Report : Form
     {
-
-        private MySqlConnection connection;
-        private string server;
-        private string database;
-        private string uid;
-        private string password;
+        // Reference to the DatabaseManager singleton
+        private readonly DatabaseManager dbManager;
 
         public Report()
         {
-            server = "localhost";
-            database = "PerformanceAppraissalSystem";
-            uid = "root";
-            password = "";
-            string connectionString;
-            connectionString = "SERVER=" + server + ";" + "DATABASE=" +
-            database + ";" + "UID=" + uid + ";" + "PASSWORD=" + password + ";";
-            connection = new MySqlConnection(connectionString);
+            // Get the DatabaseManager instance
+            dbManager = DatabaseManager.Instance;
 
             InitializeComponent();
-        }
-
-        private bool OpenConnection()
-        {
-            try
-            {
-                connection.Open();
-                return true;
-            }
-            catch (MySqlException ex)
-            {
-                //When handling errors, you can your application's response based on the  
-                //error number.              
-                //The two most common error numbers when connecting are as follows:   
-                //0: Cannot connect to server.       
-                //1045: Invalid user name and/or password.     
-                switch (ex.Number)
-                {
-                    case 0:
-                        MessageBox.Show("Cannot connect to server.  Contact administrator");
-                        break;
-                    case 1045:
-                        MessageBox.Show("Invalid username/password, please try again");
-                        break;
-                }
-                return false;
-            }
-        }
-
-        private bool CloseConnection()
-        {
-            try
-            {
-                connection.Close();
-                return true;
-            }
-            catch (MySqlException ex)
-            {
-                MessageBox.Show(ex.Message);
-                return false;
-            }
         }
 
         private void cmdHome_Click(object sender, EventArgs e)
@@ -131,49 +79,64 @@ namespace PerfomanceAppraissalSystem
 
         private void cmdHelp_Click(object sender, EventArgs e)
         {
-
             Help.ShowHelp(this, "UserManual.chm");
         }
 
         private void cmdReport_Click(object sender, EventArgs e)
         {
-         
-                if (this.OpenConnection() == true)
+            // Input validation
+            if (string.IsNullOrEmpty(txtEmployeeIDReport.Text))
+            {
+                MessageBox.Show("Please enter an Employee ID.", "Validation Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                // Clear previous results
+                listView1.Items.Clear();
+
+                Dictionary<string, object> parameters = new Dictionary<string, object>
                 {
-                    try
-                    {
-                        String query = "select r.Rating, r.Period, r.Year, e.JobTitle, e.Firstname, e.Lastname , e.Department From employees e, ratings r where e.EmployeeID = r.EmployeeID and e.EmployeeID  = '" + txtEmployeeIDReport.Text + "'";
-                        MySqlCommand cmd = new MySqlCommand(query, connection);
-                        cmd.ExecuteNonQuery();
-                        MySqlDataAdapter da = new MySqlDataAdapter(cmd);
-                        DataTable dt = new DataTable();
-                        da.Fill(dt);
+                    { "@employeeId", txtEmployeeIDReport.Text }
+                };
 
-                        foreach (DataRow dr in dt.Rows)
-                        {
-                            ListViewItem item = new ListViewItem(dr["Rating"].ToString());
-                            item.SubItems.Add(dr["Period"].ToString());
-                            item.SubItems.Add(dr["Year"].ToString());
-                            item.SubItems.Add(dr["JobTitle"].ToString());
-                            item.SubItems.Add(dr["Firstname"].ToString());
-                            item.SubItems.Add(dr["Lastname"].ToString());
-                            item.SubItems.Add(dr["Department"].ToString());
-                           
+                DataTable dt = dbManager.ExecuteQuery(
+                    "SELECT r.Rating, r.Period, r.Year, e.JobTitle, e.Firstname, e.Lastname, e.Department " +
+                    "FROM employees e, ratings r " +
+                    "WHERE e.EmployeeID = r.EmployeeID AND e.EmployeeID = @employeeId",
+                    parameters
+                );
 
-                            listView1.Items.Add(item);
-                        }
-                        this.CloseConnection();
-                        MessageBox.Show("Here is your report");
-
-
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Can't display report" + ex.Message);
-                    }
+                if (dt.Rows.Count == 0)
+                {
+                    MessageBox.Show("No report data found for the specified employee.", 
+                        "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
 
+                foreach (DataRow dr in dt.Rows)
+                {
+                    ListViewItem item = new ListViewItem(dr["Rating"].ToString());
+                    item.SubItems.Add(dr["Period"].ToString());
+                    item.SubItems.Add(dr["Year"].ToString());
+                    item.SubItems.Add(dr["JobTitle"].ToString());
+                    item.SubItems.Add(dr["Firstname"].ToString());
+                    item.SubItems.Add(dr["Lastname"].ToString());
+                    item.SubItems.Add(dr["Department"].ToString());
+
+                    listView1.Items.Add(item);
+                }
+
+                MessageBox.Show("Report generated successfully.", "Success", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error generating report: " + ex.Message, 
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
-
+}
